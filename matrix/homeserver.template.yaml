@@ -1,4 +1,3 @@
-# Synapse Homeserver Configuration
 server_name: "!!DOMAIN!!"
 pid_file: /data/homeserver.pid
 
@@ -11,7 +10,6 @@ listeners:
       - names: [client, federation]
         compress: false
 
-# PostgreSQL
 database:
   name: psycopg2
   args:
@@ -23,7 +21,6 @@ database:
     cp_max: 10
   allow_unsafe_locale: true
 
-# Redis
 redis:
   enabled: true
   host: redis
@@ -33,5 +30,13 @@ enable_registration: false
 suppress_key_server_warning: true
 report_stats: true
 no_tls: true
+
+macaroon_secret_key: !!MACAROON_SECRET_KEY!!
+
+trusted_key_servers:
+  - server_name: "matrix.org"
+    verify_keys:
+      "ed25519:auto": "Noi6WqcDj0QmPxCNQqgezwTlBKrfqehY1u2FyWP0uIk"
+
 log_config: "/data/!!DOMAIN!!.log.config"
 media_store_path: "/data/media_store"
