@@ -1,0 +1,11 @@
+# Traefik-Ergänzungen für Jitsi
+labels:
+  - "traefik.enable=true"
+  - "traefik.http.routers.${CUSTOMER}-jitsi.rule=Host(`${DOMAIN}`)"
+  - "traefik.http.routers.${CUSTOMER}-jitsi.entrypoints=websecure"
+  - "traefik.http.routers.${CUSTOMER}-jitsi.tls.certresolver=letsencrypt"
+  - "traefik.http.services.${CUSTOMER}-jitsi.loadbalancer.server.port=80"
+  - "traefik.docker.network=proxy-shared"
+  - "komodo.skip=true"
+networks:
+  - proxy-shared
