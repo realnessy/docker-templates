@@ -1,0 +1,37 @@
+# Synapse Homeserver Configuration
+server_name: "!!DOMAIN!!"
+pid_file: /data/homeserver.pid
+
+listeners:
+  - port: 8008
+    tls: false
+    type: http
+    x_forwarded: true
+    resources:
+      - names: [client, federation]
+        compress: false
+
+# PostgreSQL
+database:
+  name: psycopg2
+  args:
+    user: synapse
+    password: !!POSTGRES_PASSWORD!!
+    database: synapse
+    host: postgres
+    cp_min: 5
+    cp_max: 10
+  allow_unsafe_locale: true
+
+# Redis
+redis:
+  enabled: true
+  host: redis
+  port: 6379
+
+enable_registration: false
+suppress_key_server_warning: true
+report_stats: true
+no_tls: true
+log_config: "/data/!!DOMAIN!!.log.config"
+media_store_path: "/data/media_store"
