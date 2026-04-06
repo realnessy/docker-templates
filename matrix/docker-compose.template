@@ -1,1 +1,86 @@
-# Hier kommt später die Matrix docker-compose.template rein
+services:
+  postgres:
+    image: postgres:16-alpine
+    networks:
+      - matrix_net
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: synapse
+      POSTGRES_PASSWORD: !!POSTGRES_PASSWORD!!
+      POSTGRES_DB: synapse
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U synapse"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    networks:
+      - matrix_net
+    restart: unless-stopped
+
+  synapse:
+    image: matrixdotorg/synapse:latest
+    networks:
+      - matrix_net
+      - proxy-shared
+    volumes:
+      - matrix_synapse_data:/data
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.!!CUSTOMERNAME!!-synapse.rule=Host(`matrix.!!DOMAIN!!`)"
+      - "traefik.http.routers.!!CUSTOMERNAME!!-synapse.entrypoints=websecure"
+      - "traefik.http.routers.!!CUSTOMERNAME!!-synapse.tls.certresolver=letsencrypt"
+      - "traefik.http.services.!!CUSTOMERNAME!!-synapse.loadbalancer.server.port=8008"
+      - "traefik.docker.network=proxy-shared"
+    restart: unless-stopped
+
+  element-web:
+    image: vectorim/element-web:latest
+    networks:
+      - proxy-shared
+    volumes:
+      - ./element/config.json:/app/config.json:ro
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.!!CUSTOMERNAME!!-element.rule=Host(`chat.!!DOMAIN!!`)"
+      - "traefik.http.routers.!!CUSTOMERNAME!!-element.entrypoints=websecure"
+      - "traefik.http.routers.!!CUSTOMERNAME!!-element.tls.certresolver=letsencrypt"
+      - "traefik.http.services.!!CUSTOMERNAME!!-element.loadbalancer.server.port=80"
+      - "traefik.docker.network=proxy-shared"
+    restart: unless-stopped
+
+  wellknown:
+    image: nginx:alpine
+    networks:
+      - proxy-shared
+    volumes:
+      - ./wellknown/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./wellknown/www:/var/www:ro
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.!!CUSTOMERNAME!!-wellknown.rule=Host(`!!DOMAIN!!`) && PathPrefix(`/.well-known/matrix/`)"
+      - "traefik.http.routers.!!CUSTOMERNAME!!-wellknown.entrypoints=websecure"
+      - "traefik.http.routers.!!CUSTOMERNAME!!-wellknown.tls.certresolver=letsencrypt"
+      - "traefik.http.services.!!CUSTOMERNAME!!-wellknown.loadbalancer.server.port=80"
+      - "traefik.docker.network=proxy-shared"
+    restart: unless-stopped
+
+networks:
+  matrix_net:
+    driver: bridge
+  proxy-shared:
+    external: true
+    name: proxy-shared
+
+volumes:
+  postgres_data:
+  matrix_synapse_data:
