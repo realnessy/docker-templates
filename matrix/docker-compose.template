@@ -28,7 +28,7 @@ services:
       - matrix_net
       - proxy-shared
     volumes:
-      - matrix_!!CUSTOMERNAME!!_synapse_data:/data
+      - synapse_data:/data
     depends_on:
       postgres:
         condition: service_healthy
@@ -83,4 +83,4 @@ networks:
 
 volumes:
   postgres_data:
-  matrix_!!CUSTOMERNAME!!_synapse_data:
+  synapse_data:
