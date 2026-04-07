@@ -6,9 +6,10 @@ services:
     volumes:
       - !!DATA_DIR!!/postgres:/var/lib/postgresql/data
     environment:
-      - POSTGRES_USER=synapse
-      - POSTGRES_PASSWORD=!!POSTGRES_PASSWORD!!
-      - POSTGRES_DB=synapse
+      POSTGRES_USER: synapse
+      POSTGRES_PASSWORD: !!POSTGRES_PASSWORD!!
+      POSTGRES_DB: synapse
+      POSTGRES_INITDB_ARGS: "--lc-collate=C --lc-ctype=C"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U synapse"]
       interval: 5s
@@ -33,11 +34,6 @@ services:
       - matrix_!!CUSTOMERNAME!!
     volumes:
       - !!DATA_DIR!!/synapse:/data
-    environment:
-      - SYNAPSE_SERVER_NAME=matrix.!!DOMAIN!!
-      - SYNAPSE_REPORT_STATS=no
-      - SYNAPSE_REGISTRATION_SHARED_SECRET=!!REGISTRATION_SHARED_SECRET!!
-      - POSTGRES_PASSWORD=!!POSTGRES_PASSWORD!!
     depends_on:
       postgres:
         condition: service_healthy
