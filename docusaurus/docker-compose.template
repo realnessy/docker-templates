@@ -1,0 +1,22 @@
+services:
+  docusaurus:
+    image: node:20-alpine
+    container_name: docusaurus-!!DOMAIN_NORMALIZED!!
+    restart: unless-stopped
+    working_dir: /app
+    networks:
+      - proxy-shared
+    volumes:
+      - !!DATA_DIR!!/website:/app
+    command: sh -c "npm install && npm run build && npx serve build -l 3000"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.docusaurus-!!DOMAIN_NORMALIZED!!.rule=Host(`!!WEBDOMAIN!!`)"
+      - "traefik.http.routers.docusaurus-!!DOMAIN_NORMALIZED!!.entrypoints=websecure"
+      - "traefik.http.routers.docusaurus-!!DOMAIN_NORMALIZED!!.tls.certresolver=letsencrypt"
+      - "traefik.http.services.docusaurus-!!DOMAIN_NORMALIZED!!.loadbalancer.server.port=3000"
+      - "traefik.docker.network=proxy-shared"
+
+networks:
+  proxy-shared:
+    external: true
