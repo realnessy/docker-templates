@@ -1,0 +1,55 @@
+services:
+  db:
+    image: mariadb:10.11
+    container_name: ${STACKNAME:-wordpress_d_www_example_com}_db
+    restart: unless-stopped
+    networks:
+      - proxy-shared
+    volumes:
+      - /opt/docker-data/lampiphant_de/wordpress_d_test_lampiphant_de/db:/var/lib/mysql
+    environment:
+      - MYSQL_ROOT_PASSWORD=${DB_ROOT_PASSWORD}
+      - MYSQL_DATABASE=${DB_NAME:-wordpress}
+      - MYSQL_USER=${DB_USER:-wpuser}
+      - MYSQL_PASSWORD=${DB_PASSWORD}
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${DB_ROOT_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    deploy:
+      restart_policy:
+        condition: any
+
+  wordpress:
+    image: wordpress:latest
+    container_name: ${STACKNAME:-wordpress_d_www_example_com}
+    restart: unless-stopped
+    networks:
+      - proxy-shared
+    volumes:
+      - /opt/docker-data/${CUSTOMERNAME:-customer_directory}/${STACKNAME:-wordpress_d_www_example_com}/wordpress:/var/www/html
+    environment:
+      - WORDPRESS_DB_HOST=db
+      - WORDPRESS_DB_NAME=${DB_NAME:-wordpress}
+      - WORDPRESS_DB_USER=${DB_USER:-wpuser}
+      - WORDPRESS_DB_PASSWORD=${DB_PASSWORD}
+      - WORDPRESS_TABLE_PREFIX=${TABLE_PREFIX}
+    depends_on:
+      db:
+        condition: service_healthy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.${STACKNAME:-wordpress_d_www_example_com}.rule=Host(`${APPDOMAIN:-www.example.com}`)"
+      - "traefik.http.routers.${STACKNAME:-wordpress_d_www_example_com}.entrypoints=websecure"
+      - "traefik.http.routers.${STACKNAME:-wordpress_d_www_example_com}.tls.certresolver=letsencrypt"
+      - "traefik.http.services.${STACKNAME:-wordpress_d_www_example_com}.loadbalancer.server.port=80"
+      - "traefik.docker.network=proxy-shared"
+    deploy:
+      restart_policy:
+        condition: any
+
+networks:
+  proxy-shared:
+    external: true
+

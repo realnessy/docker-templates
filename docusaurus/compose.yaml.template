@@ -7,11 +7,11 @@ services:
     networks:
       - proxy-shared
     volumes:
-      - ${DATA_DIR:-/opt/docker-data/customer_directory/docusaurus_d_docs_example_com}/website:/app
+      - /opt/docker-data/${CUSTOMERNAME:-customer_directory}/${STACKNAME:-docusaurus_d_docs_example_com}/website:/app
     command: sh -c "npm install && npm run build && npx serve build -l 3000"
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.${STACKNAME:-docusaurus_d_docs_example_com}.rule=Host(`${WEBDOMAIN:-docs.example.com}`)"
+      - "traefik.http.routers.${STACKNAME:-docusaurus_d_docs_example_com}.rule=Host(`${APPDOMAIN:-docs.example.com}`)"
       - "traefik.http.routers.${STACKNAME:-docusaurus_d_docs_example_com}.entrypoints=websecure"
       - "traefik.http.routers.${STACKNAME:-docusaurus_d_docs_example_com}.tls.certresolver=letsencrypt"
       - "traefik.http.services.${STACKNAME:-docusaurus_d_docs_example_com}.loadbalancer.server.port=3000"
