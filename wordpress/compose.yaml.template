@@ -6,17 +6,20 @@ services:
     networks:
       - proxy-shared
     volumes:
-      - /opt/docker-data/lampiphant_de/wordpress_d_test_lampiphant_de/db:/var/lib/mysql
+      - /opt/docker-data/${CUSTOMERNAME:-customer_directory}/${STACKNAME:-wordpress_d_www_example_com}/db:/var/lib/mysql
     environment:
       - MYSQL_ROOT_PASSWORD=${DB_ROOT_PASSWORD}
       - MYSQL_DATABASE=${DB_NAME:-wordpress}
       - MYSQL_USER=${DB_USER:-wpuser}
       - MYSQL_PASSWORD=${DB_PASSWORD}
+      - MYSQL_CHARSET=utf8mb4      # Use UTF8MB4 to enable emoji and other modern character sets
+      - MYSQL_COLLATION=utf8mb4_unicode_ci
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${DB_ROOT_PASSWORD}"]
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
       interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 20s   # MariaDB needs a little time to initialize
     deploy:
       restart_policy:
         condition: any
@@ -35,6 +38,8 @@ services:
       - WORDPRESS_DB_USER=${DB_USER:-wpuser}
       - WORDPRESS_DB_PASSWORD=${DB_PASSWORD}
       - WORDPRESS_TABLE_PREFIX=${TABLE_PREFIX:-wp_}
+      # Optionale sinnvolle Defaults (können überschrieben werden)
+      - WORDPRESS_DEBUG=${WP_DEBUG:-false}
     depends_on:
       db:
         condition: service_healthy
